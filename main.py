@@ -5,6 +5,10 @@ import win32api
 import win32print
 from shutil import copyfile
 from datetime import datetime
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import smtplib
 
 doc_name = 'Employee Health Check Form.docx'
 doc_name_temp = 'Employee Health Check Form temp.docx'
@@ -36,6 +40,34 @@ for table in document.tables:
 document.save(doc_name_temp)
 
 f.close()
-print_doc(doc_name_temp)
+#print_doc(doc_name_temp)
 
+gmail_user = "garrett.tetil@gmail.com"
+gmail_pwd = "Waterside0!"
+FROM = "garrett.tetil@gmail.com"
+TO = 'jkozan@tifs.com'
+SUBJECT = 'Health Form'
 
+msg = MIMEMultipart()
+msg['From'] = FROM
+msg['To'] = TO
+msg['Subject'] = SUBJECT
+
+with open(doc_name_temp, "rb") as fil:
+    part = MIMEApplication(
+        fil.read(),
+        Name=doc_name_temp
+    )
+# After the file is closed
+part['Content-Disposition'] = 'attachment; filename="%s"' % doc_name
+msg.attach(part)
+
+# SMTP_SSL Example
+server_ssl = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+server_ssl.ehlo() # optional, called by login()
+server_ssl.login(gmail_user, gmail_pwd)
+# ssl server doesn't support or need tls, so don't call server_ssl.starttls()
+server_ssl.sendmail(FROM, TO, msg.as_string())
+#server_ssl.quit()
+server_ssl.close()
+print('successfully sent the mail')
